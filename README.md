@@ -69,9 +69,54 @@ python app_lite.py
 
 3. 访问 http://localhost:5000
 
+## 解决方案
+
+由于Vercel部署遇到网络连接问题，我创建了一个简化的单文件解决方案：
+
+### 新的单文件版本 (`main.py`)
+
+- ✅ 包含完整的Web界面和API
+- ✅ 简化的HTML模板，内嵌在Python文件中
+- ✅ 所有功能都在一个文件中，便于部署
+- ✅ 本地测试完全正常
+
+### 本地测试
+
+1. 运行单文件版本：
+```bash
+python3 main.py
+```
+
+2. 访问 http://127.0.0.1:5000
+
+3. 测试功能：
+   - API健康检查
+   - 添加志愿者记录
+   - 查看积分汇总
+
+### 部署建议
+
+由于网络连接问题，建议：
+
+1. **手动部署到Vercel**：
+   - 将 `main.py` 作为主要文件
+   - 使用简化的 `vercel.json` 配置
+   - 确保 `requirements.txt` 只包含 `flask`
+
+2. **替代部署方案**：
+   - 使用 Heroku
+   - 使用 Railway
+   - 使用 Render
+
 ## 测试API
 
 运行测试脚本：
 ```bash
 python deploy_test.py https://volunteer-record.vercel.app
+```
+
+或者本地测试：
+```bash
+python3 main.py
+# 然后访问 http://127.0.0.1:5000
 ```
