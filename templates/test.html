@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API 测试页面</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .result {
+            margin-top: 10px;
+            padding: 10px;
+            background-color: #f9f9f9;
+            border-radius: 4px;
+            white-space: pre-wrap;
+        }
+        .error {
+            background-color: #ffebee;
+            color: #c62828;
+        }
+        .success {
+            background-color: #e8f5e8;
+            color: #2e7d32;
+        }
+    </style>
+</head>
+<body>
+    <h1>志愿者积分平台 API 测试</h1>
+    
+    <div class="test-section">
+        <h2>1. 健康检查</h2>
+        <button onclick="testHealth()">测试 /api/health</button>
+        <div id="health-result" class="result"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>2. 提交测试数据</h2>
+        <button onclick="submitTestData()">提交测试数据</button>
+        <div id="submit-result" class="result"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>3. 获取汇总数据</h2>
+        <button onclick="getSummary()">获取汇总数据</button>
+        <div id="summary-result" class="result"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>4. 获取使用情况</h2>
+        <button onclick="getUsageSummary()">获取使用情况</button>
+        <div id="usage-result" class="result"></div>
+    </div>
+
+    <script>
+        async function testHealth() {
+            const resultDiv = document.getElementById('health-result');
+            resultDiv.textContent = '测试中...';
+            
+            try {
+                const response = await fetch('/api/health');
+                const data = await response.json();
+                
+                if (response.ok) {
+                    resultDiv.className = 'result success';
+                    resultDiv.textContent = '✓ API 健康检查成功\n' + JSON.stringify(data, null, 2);
+                } else {
+                    resultDiv.className = 'result error';
+                    resultDiv.textContent = '✗ API 健康检查失败\n' + JSON.stringify(data, null, 2);
+                }
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = '✗ 请求失败: ' + error.message;
+            }
+        }
+
+        async function submitTestData() {
+            const resultDiv = document.getElementById('submit-result');
+            resultDiv.textContent = '提交中...';
+            
+            const testData = {
+                activityData: [
+                    ['线下活动', '2024年1月志愿活动', '组织者', '张三', '10'],
+                    ['线下活动', '2024年1月志愿活动', '参与者', '李四', '5']
+                ],
+                usageData: [
+                    ['张三', '3', '1']
+                ]
+            };
+            
+            try {
+                const response = await fetch('/api/submit', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(testData)
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    resultDiv.className = 'result success';
+                    resultDiv.textContent = '✓ 数据提交成功\n' + JSON.stringify(data, null, 2);
+                } else {
+                    resultDiv.className = 'result error';
+                    resultDiv.textContent = '✗ 数据提交失败\n' + JSON.stringify(data, null, 2);
+                }
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = '✗ 请求失败: ' + error.message;
+            }
+        }
+
+        async function getSummary() {
+            const resultDiv = document.getElementById('summary-result');
+            resultDiv.textContent = '获取中...';
+            
+            try {
+                const response = await fetch('/api/get_summary');
+                const data = await response.json();
+                
+                if (response.ok) {
+                    resultDiv.className = 'result success';
+                    resultDiv.textContent = '✓ 获取汇总数据成功\n' + JSON.stringify(data, null, 2);
+                } else {
+                    resultDiv.className = 'result error';
+                    resultDiv.textContent = '✗ 获取汇总数据失败\n' + JSON.stringify(data, null, 2);
+                }
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = '✗ 请求失败: ' + error.message;
+            }
+        }
+
+        async function getUsageSummary() {
+            const resultDiv = document.getElementById('usage-result');
+            resultDiv.textContent = '获取中...';
+            
+            try {
+                const response = await fetch('/api/get_usage_summary');
+                const data = await response.json();
+                
+                if (response.ok) {
+                    resultDiv.className = 'result success';
+                    resultDiv.textContent = '✓ 获取使用情况成功\n' + JSON.stringify(data, null, 2);
+                } else {
+                    resultDiv.className = 'result error';
+                    resultDiv.textContent = '✗ 获取使用情况失败\n' + JSON.stringify(data, null, 2);
+                }
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = '✗ 请求失败: ' + error.message;
+            }
+        }
+
+        // 页面加载时自动测试健康检查
+        window.addEventListener('DOMContentLoaded', () => {
+            testHealth();
+        });
+    </script>
+</body>
+</html>

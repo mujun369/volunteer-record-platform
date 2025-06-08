@@ -1,44 +1,60 @@
 <!DOCTYPE html>
-<html>
+<html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <title>斯坦福成长创新圈志愿者积分记录平台</title>
-    <!-- 使用meta标签重定向 - 最可靠的方法 -->
-    <meta http-equiv="refresh" content="0; url=templates/volunteer_points_platform.html">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>志愿者积分平台</title>
     <style>
         body {
             font-family: Arial, sans-serif;
-            text-align: center;
-            margin-top: 50px;
-            line-height: 1.6;
-        }
-        .container {
-            max-width: 600px;
+            max-width: 800px;
             margin: 0 auto;
             padding: 20px;
+            text-align: center;
         }
-        .link {
-            color: #0366d6;
+        .container {
+            margin: 50px 0;
+        }
+        .btn {
+            display: inline-block;
+            padding: 15px 30px;
+            margin: 10px;
+            background-color: #4CAF50;
+            color: white;
             text-decoration: none;
+            border-radius: 5px;
+            font-size: 18px;
         }
-        .link:hover {
-            text-decoration: underline;
+        .btn:hover {
+            background-color: #45a049;
+        }
+        .btn.secondary {
+            background-color: #2196F3;
+        }
+        .btn.secondary:hover {
+            background-color: #1976D2;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>斯坦福成长创新圈志愿者积分记录平台</h1>
-        <p>正在跳转到主页面...</p>
-        <p>如果您没有被自动重定向，请<a class="link" href="templates/volunteer_points_platform.html">点击这里</a>访问主页面。</p>
+        <h1>志愿者积分平台</h1>
+        <p>欢迎使用志愿者积分管理系统</p>
+
+        <div>
+            <a href="/templates/volunteer_points_platform.html" class="btn">进入主平台</a>
+            <a href="/templates/test.html" class="btn secondary">API 测试页面</a>
+        </div>
+
+        <div style="margin-top: 30px;">
+            <h3>功能说明</h3>
+            <ul style="text-align: left; display: inline-block;">
+                <li>志愿者积分录入和管理</li>
+                <li>积分使用情况记录</li>
+                <li>数据汇总和查询</li>
+                <li>数据导出功能</li>
+            </ul>
+        </div>
     </div>
-    
-    <!-- 使用JavaScript重定向作为备份 -->
-    <script>
-        // 使用setTimeout确保页面有时间加载
-        setTimeout(function() {
-            window.location.href = "templates/volunteer_points_platform.html";
-        }, 100);
-    </script>
 </body>
 </html>

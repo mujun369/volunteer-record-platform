@@ -1,72 +1,187 @@
 """
-Vercel 部署入口点
+Vercel 部署入口点 - 简化版
 """
-import os
-import sys
-import logging
-from flask import Flask, request, jsonify, send_file, render_template
-import sqlite3
-from io import BytesIO
-import xlsxwriter
-from datetime import datetime
-from flask_cors import CORS
+from flask import Flask, request, jsonify
+import json
 
-# 添加项目根目录到 Python 路径
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+app = Flask(__name__)
 
-# 尝试导入应用
-try:
-    from app_lite import app, init_db
-except ImportError:
-    # 如果导入失败，创建一个最小化的应用
-    app = Flask(__name__, 
-                template_folder=os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'templates'))
-    CORS(app)
-    
-    # 初始化数据库
-    def init_db():
-        conn = sqlite3.connect('volunteer_points.db')
-        c = conn.cursor()
-        
-        # 创建志愿者积分表
-        c.execute('''
-        CREATE TABLE IF NOT EXISTS volunteer_points (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            activity_type TEXT,
-            activity_time_name TEXT,
-            category TEXT,
-            name TEXT,
-            score INTEGER
-        )
-        ''')
-        
-        # 创建志愿者积分使用情况表
-        c.execute('''
-        CREATE TABLE IF NOT EXISTS volunteer_usage (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            name TEXT,
-            usage_description TEXT,
-            score INTEGER
-        )
-        ''')
-        
-        conn.commit()
-        conn.close()
-    
-    # 添加基本路由
-    @app.route('/')
-    def index():
-        return render_template('volunteer_points_platform.html')
-    
-    @app.route('/health')
-    def health():
-        return jsonify({"status": "healthy"}), 200
+# 启用CORS
+@app.after_request
+def after_request(response):
+    response.headers.add('Access-Control-Allow-Origin', '*')
+    response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization')
+    response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS')
+    return response
 
-# 初始化数据库
-try:
-    init_db()
-except Exception as e:
-    print(f"Database initialization error: {str(e)}")
+# 简单的内存存储
+volunteer_data = []
+usage_data = []
 
-# 导出应用实例供 Vercel 使用
-application = app
+# 根路由
+@app.route('/')
+def index():
+    return jsonify({
+        "message": "志愿者积分平台 API",
+        "status": "running"
+    })
+
+# API信息
+@app.route('/api')
+@app.route('/api/')
+def api_info():
+    return jsonify({
+        "name": "志愿者积分平台 API",
+        "version": "1.0.0",
+        "status": "running"
+    })
+
+# 健康检查
+@app.route('/api/health')
+def health_check():
+    return jsonify({
+        "status": "healthy",
+        "message": "API 服务正常运行"
+    })
+
+# 获取汇总数据
+@app.route('/api/get_summary')
+def get_summary():
+    try:
+        summary = {}
+        for record in volunteer_data:
+            if len(record) >= 5:
+                name = record[3]
+                score = int(record[4]) if str(record[4]).isdigit() else 0
+                summary[name] = summary.get(name, 0) + score
+
+        result = [{"name": name, "total_score": score} for name, score in summary.items()]
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+# 获取使用情况
+@app.route('/api/get_usage_summary')
+def get_usage_summary():
+    try:
+        usage_summary = {}
+        for record in usage_data:
+            if len(record) >= 3:
+                name = record[0]
+                used_points = int(record[1]) if str(record[1]).isdigit() else 0
+                course_count = int(record[2]) if str(record[2]).isdigit() else 0
+
+                if name in usage_summary:
+                    usage_summary[name]['used_points'] += used_points
+                    usage_summary[name]['course_count'] += course_count
+                else:
+                    usage_summary[name] = {
+                        'used_points': used_points,
+                        'course_count': course_count
+                    }
+
+        result = [
+            {
+                "name": name,
+                "used_points": data['used_points'],
+                "course_count": data['course_count']
+            }
+            for name, data in usage_summary.items()
+        ]
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+# 提交数据
+@app.route('/api/submit', methods=['POST'])
+def submit_data():
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({"success": False, "message": "无效的数据格式"}), 400
+
+        # 处理活动数据
+        if 'activityData' in data and data['activityData']:
+            volunteer_data.extend(data['activityData'])
+
+        # 处理使用数据
+        if 'usageData' in data and data['usageData']:
+            usage_data.extend(data['usageData'])
+
+        return jsonify({
+            "success": True,
+            "message": "数据提交成功",
+            "activity_count": len(data.get('activityData', [])),
+            "usage_count": len(data.get('usageData', []))
+        })
+
+    except Exception as e:
+        return jsonify({
+            "success": False,
+            "message": f"服务器错误: {str(e)}"
+        }), 500
+
+# 导出活动总览表
+@app.route('/api/export_db')
+def export_db():
+    try:
+        csv_content = "活动类型,活动时间与名称,类别,志愿者名字,积分\n"
+        for record in volunteer_data:
+            if len(record) >= 5:
+                csv_content += ",".join(str(field) for field in record) + "\n"
+
+        return csv_content, 200, {
+            'Content-Type': 'text/csv; charset=utf-8',
+            'Content-Disposition': 'attachment; filename=volunteer_activity_overview.csv'
+        }
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+# 导出志愿者积分总表
+@app.route('/api/export_volunteer_summary')
+def export_volunteer_summary():
+    try:
+        # 计算汇总数据
+        summary = {}
+        for record in volunteer_data:
+            if len(record) >= 5:
+                name = record[3]
+                score = int(record[4]) if str(record[4]).isdigit() else 0
+                summary[name] = summary.get(name, 0) + score
+
+        # 计算使用情况
+        usage_summary = {}
+        for record in usage_data:
+            if len(record) >= 3:
+                name = record[0]
+                used_points = int(record[1]) if str(record[1]).isdigit() else 0
+                course_count = int(record[2]) if str(record[2]).isdigit() else 0
+
+                if name in usage_summary:
+                    usage_summary[name]['used_points'] += used_points
+                    usage_summary[name]['course_count'] += course_count
+                else:
+                    usage_summary[name] = {
+                        'used_points': used_points,
+                        'course_count': course_count
+                    }
+
+        # 创建CSV内容
+        csv_content = "志愿者名字,总积分,已使用积分,已兑换课程数量,剩余积分\n"
+        for name, total_score in summary.items():
+            used_info = usage_summary.get(name, {'used_points': 0, 'course_count': 0})
+            used_points = used_info['used_points']
+            course_count = used_info['course_count']
+            remaining = total_score - used_points
+            csv_content += f"{name},{total_score},{used_points},{course_count},{remaining}\n"
+
+        return csv_content, 200, {
+            'Content-Type': 'text/csv; charset=utf-8',
+            'Content-Disposition': 'attachment; filename=volunteer_points_summary.csv'
+        }
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+# 用于本地测试
+if __name__ == "__main__":
+    app.run(debug=True)

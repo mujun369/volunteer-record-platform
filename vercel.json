@@ -1,18 +1,1 @@
-{
-  "version": 2,
-  "builds": [
-    {
-      "src": "app_lite.py",
-      "use": "@vercel/python"
-    }
-  ],
-  "routes": [
-    {
-      "src": "/(.*)",
-      "dest": "app_lite.py"
-    }
-  ],
-  "env": {
-    "PYTHONUNBUFFERED": "1"
-  }
-}
+{"version": 2, "builds": [{"src": "api/app.py", "use": "@vercel/python"}], "routes": [{"src": "/api/(.*)", "dest": "api/app.py"}, {"src": "/", "dest": "api/app.py"}, {"src": "/templates/(.*)", "dest": "templates/$1"}, {"src": "/(.*)", "dest": "templates/$1"}]}
